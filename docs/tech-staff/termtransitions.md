@@ -25,7 +25,7 @@ Two scripts can perform the database dump and grading run archive operations:
 
 A CRON job is configured to automatically back-up the database and grading run data. After the end-date of the semester transition, it is no longer necessary to retain the back-ups created by the CRON jobs. Hence, delete all of the database and grading run back-ups *prior* to the last back-up and archive of the database.
 
-## Term Transition Checklist
+## VM Term Transition Checklist
 
 - [ ] Staff and faculty have agreed on an end-date when Classy archiving can take place without disrupting course operations
 - [ ] Database has been backed-up to **Back-up storage location**
@@ -44,3 +44,9 @@ A CRON job is configured to automatically back-up the database and grading run d
   - Instructions: [Setup Github OAuth](/docs/tech-staff/githubsetup.md#setup-github-oauth)
 - [ ] Only the last two database and grading run back-ups are retained
   - All grading run and database back-ups prior to the last back-ups have been deleted
+
+## Github Term Transition Checklist
+
+- [ ] If another course is being offered next term, setup a new Github organization
+- [ ] [Setup a new OAuth Application](/docs/tech-staff/githubsetup.md#setup-github-oauth) under the Github organization
+  - Add the OAuth credentials to the `.env` file of the VM
