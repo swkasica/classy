@@ -1,10 +1,10 @@
 #!/bin/bash
 
 ###################################
-# Create front-end and back-end boierplate customization files if they do not exist. This script takes default boierplate files and copies them over into 
+# Create front-end and back-end boierplate customization files if they do not exist. This script takes default boierplate files and copies them over into
 # filenames that are used for customized logic in Classy
 #
-# steca - 
+# steca -
 # IMPORTANT: Aborts if any previous custom file is found.
 #
 # This should be run from the base folder, i.e. /opt/classy
@@ -54,10 +54,10 @@ echo "default-file-setup.sh:: starting to copy defaults to custom"
 ## FRONTEND - HTML VIEWS
 # If mkdir fails, we want this to stop: if the parent doesn't exist, there's a problem...
 mkdir -v "packages/portal/frontend/html/${envVar}/"
-cp -nv "packages/portal/frontend/html/default/custom.html" "packages/portal/frontend/html/${envVar}/custom.html"
-cp -nv "packages/portal/frontend/html/default/landing.html" "packages/portal/frontend/html/${envVar}/landing.html"
-cp -nv "packages/portal/frontend/html/default/login.html" "packages/portal/frontend/html/${envVar}/login.html"
-cp -nv "packages/portal/frontend/html/default/student.html" "packages/portal/frontend/html/${envVar}/student.html"
+cp -nv "packages/portal/frontend/html/custom.html" "packages/portal/frontend/html/${envVar}/custom.html"
+cp -nv "packages/portal/frontend/html/landing.html" "packages/portal/frontend/html/${envVar}/landing.html"
+cp -nv "packages/portal/frontend/html/login.html" "packages/portal/frontend/html/${envVar}/login.html"
+cp -nv "packages/portal/frontend/html/student.html" "packages/portal/frontend/html/${envVar}/student.html"
 
 ## FRONTEND - VIEW MODELS
 cp -nv "packages/portal/frontend/src/app/custom/DefaultStudentView.ts" "packages/portal/frontend/src/app/custom/CustomStudentView.ts"
