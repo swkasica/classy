@@ -557,7 +557,7 @@ describe("GitHubActions", () => {
         }
 
         try {
-            await gh.importRepoFS('https://localhost', 'https://localhost');
+            await gh.importRepoFS('https://cs.ubc.ca', 'https://cs.ubc.ca');
         } catch (err) {
             // expected
         }
