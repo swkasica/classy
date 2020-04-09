@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import fetch, {RequestInit} from "node-fetch";
 import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../common/Config";
@@ -310,15 +311,14 @@ export class GitHubActions implements IGitHubActions {
             await GitHubActions.checkDatabase(repoId, null);
 
             const uri = this.apiPath + '/orgs/' + this.org + '/repos';
-            const options = {
+            const options: RequestInit = {
                 method:  'POST',
-                uri:     uri,
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 },
-                body:    {
+                body:    JSON.stringify({
                     name:          repoId,
                     // In Dev and Test, Github free Org Repos cannot be private.
                     private:       true,
@@ -326,12 +326,12 @@ export class GitHubActions implements IGitHubActions {
                     has_wiki:      false,
                     has_downloads: false,
                     auto_init:     false
-                },
-                json:    true
+                })
             };
 
             Log.info("GitHubAction::createRepo( " + repoId + " ) - making request");
-            const body = await rp(options);
+            const res = await fetch(uri, options);
+            const body = await res.json();
             Log.info("GitHubAction::createRepo( " + repoId + " ) - request complete");
             const url = body.html_url;
 
@@ -363,33 +363,30 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::deleteRepo( " + this.org + ", " + repoName + " ) - start");
         const start = Date.now();
 
-        try {
-            // first make sure the repo exists
-            const repoExists = await this.repoExists(repoName);
+        const repoExists = await this.repoExists(repoName);
 
-            if (repoExists === true) {
-                const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
-                Log.trace("GitHubAction::deleteRepo( " + repoName + " ) - URI: " + uri);
-                const options = {
-                    method:  'DELETE',
-                    uri:     uri,
-                    headers: {
-                        'Authorization': this.gitHubAuthToken,
-                        'User-Agent':    this.gitHubUserName,
-                        'Accept':        'application/json'
-                    }
-                };
+        if (repoExists === true) {
+            const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
+            Log.trace("GitHubAction::deleteRepo( " + repoName + " ) - URI: " + uri);
+            const options: RequestInit = {
+                method:  'DELETE',
+                headers: {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    'Accept':        'application/json'
+                }
+            };
 
-                await rp(options);
+            const response = await fetch(uri, options);
+            if (response.ok) {
                 Log.info("GitHubAction::deleteRepo( " + repoName + " ) - successfully deleted; took: " + Util.took(start));
                 return true;
-            } else {
-                Log.info("GitHubAction::deleteRepo( " + repoName + " ) - repo does not exist, not deleting; took: " + Util.took(start));
-                return false;
             }
-        } catch (err) {
-            // jut warn because 404 throws an error
-            Log.warn("GitHubAction::deleteRepo(..) - ERROR: " + err.message);
+            const body = await response.json();
+            Log.info("GitHubAction::deleteRepo( " + repoName + " ) - unable to delete GH repo, not deleting; took: " + body.message);
+            return false;
+        } else {
+            Log.info("GitHubAction::deleteRepo( " + repoName + " ) - repo does not exist, not deleting; took: " + Util.took(start));
             return false;
         }
     }
