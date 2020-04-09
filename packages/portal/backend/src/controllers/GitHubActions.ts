@@ -402,9 +402,8 @@ export class GitHubActions implements IGitHubActions {
 
         const start = Date.now();
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
-        const options = {
+        const options: RequestInit = {
             method:  'GET',
-            uri:     uri,
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
@@ -412,14 +411,13 @@ export class GitHubActions implements IGitHubActions {
             }
         };
 
-        try {
-            await rp(options);
+        const response = await fetch(uri, options);
+        if (response.ok) {
             Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
             return true;
-        } catch (err) {
-            Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
-            return false;
         }
+        Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
+        return false;
     }
 
     public async deleteTeamByName(teamName: string): Promise<boolean> {
@@ -454,27 +452,24 @@ export class GitHubActions implements IGitHubActions {
             }
 
             const uri = this.apiPath + '/teams/' + teamId;
-            const options = {
+            const options: RequestInit = {
                 method:                  'DELETE',
-                uri:                     uri,
                 headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     // 'Accept': 'application/json', // custom because this is a preview api
                     'Accept':        'application/vnd.github.hellcat-preview+json'
-                },
-                resolveWithFullResponse: true,
-                json:                    true
+                }
             };
 
-            const response = await rp(options);
+            const response = await fetch(uri, options);
             // Log.info("GitHubAction::deleteTeam(..) - response: " + response);
 
-            if (response.statusCode === 204) {
+            if (response.status === 204) {
                 Log.info("GitHubAction::deleteTeam(..) - success; took: " + Util.took(start));
                 return true;
             } else {
-                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + response.statusCode + "; took: " + Util.took(start));
+                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + response.status + "; took: " + Util.took(start));
                 return false;
             }
 
@@ -686,19 +681,17 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
-        const opts = {
+        const opts: RequestInit = {
             method:  'GET',
-            uri:     uri,
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName
-            },
-            json:    true
+            }
         };
 
-        const results = await rp(opts);
+        const response = await fetch(uri, opts);
         Log.trace("GitHubAction::listWebhooks(..) - success; took: " + Util.took(start));
-        return results;
+        return await response.json();
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
@@ -714,14 +707,13 @@ export class GitHubActions implements IGitHubActions {
         // https://developer.github.com/v3/repos/hooks/#create-a-hook
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
-        const opts = {
+        const opts: RequestInit = {
             method:  'POST',
-            uri:     uri,
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName
             },
-            body:    {
+            body:    JSON.stringify({
                 name:   "web",
                 active: true,
                 events: ["commit_comment", "push"],
@@ -730,11 +722,10 @@ export class GitHubActions implements IGitHubActions {
                     secret:       secret,
                     content_type: "json"
                 }
-            },
-            json:    true
+            })
         };
 
-        const results = await rp(opts);
+        const response = await fetch(uri, opts);
         Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
         return true;
     }
@@ -757,14 +748,13 @@ export class GitHubActions implements IGitHubActions {
             // https://developer.github.com/v3/repos/hooks/#edit-a-hook
             // PATCH /repos/:owner/:repo/hooks/:hook_id
             const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks/' + hookId;
-            const opts = {
+            const opts: RequestInit = {
                 method:  'PATCH',
-                uri:     uri,
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName
                 },
-                body:    {
+                body:    JSON.stringify({
                     name:   "web",
                     active: true,
                     events: ["commit_comment", "push"],
@@ -773,11 +763,10 @@ export class GitHubActions implements IGitHubActions {
                         secret:       secret,
                         content_type: "json"
                     }
-                },
-                json:    true
+                })
             };
 
-            await rp(opts);
+            await fetch(uri, opts);
             Log.info("GitHubAction::updateWebhook(..) - success; took: " + Util.took(start));
             return true;
         } else {
