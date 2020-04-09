@@ -495,17 +495,14 @@ export class GitHubActions implements IGitHubActions {
         Log.trace("GitHubActions::listRepos(..) - URI: " + uri);
         const options = {
             method:                  'GET',
-            uri:                     uri,
             headers:                 {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
-            },
-            resolveWithFullResponse: true,
-            json:                    true
+            }
         };
 
-        const raw: any = await this.handlePagination(options);
+        const raw: any = await this.handlePagination(uri, options);
 
         const rows: Array<{repoName: string, repoNumber: number, url: string}> = [];
         for (const entry of raw) {
@@ -534,17 +531,14 @@ export class GitHubActions implements IGitHubActions {
         const uri = this.apiPath + '/orgs/' + this.org + '/members?per_page=' + this.pageSize;
         const options = {
             method:                  'GET',
-            uri:                     uri,
             headers:                 {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
-            },
-            resolveWithFullResponse: true,
-            json:                    true
+            }
         };
 
-        const raw: any = await this.handlePagination(options);
+        const raw: any = await this.handlePagination(uri, options);
 
         const rows: Array<{githubId: string, personNumber: number, url: string}> = [];
         for (const entry of raw) {
@@ -558,27 +552,23 @@ export class GitHubActions implements IGitHubActions {
         return rows;
     }
 
-    private async handlePagination(rpOptions: rp.RequestPromiseOptions): Promise<object[]> {
+    private async handlePagination(uri: string, options: RequestInit): Promise<object[]> {
         Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
 
         const start = Date.now();
 
         try {
-            rpOptions.resolveWithFullResponse = true; // in case clients forget
-            rpOptions.json = true; // in case clients forget
-
-            const fullResponse = await rp(rpOptions as any); // rpOptions is the right type already
-
+            const fullResponse = await fetch(uri, options);
             // Log.trace("GitHubActions::handlePagination(..) - after initial request");
 
             let raw: any[] = [];
             const paginationPromises: any[] = [];
-            if (typeof fullResponse.headers.link !== 'undefined') {
+            if (typeof (fullResponse.headers as any).link !== 'undefined') {
                 // first save the responses from the first page:
-                raw = fullResponse.body;
+                raw = await fullResponse.json();
 
                 let lastPage: number = -1;
-                const linkText = fullResponse.headers.link;
+                const linkText = (fullResponse.headers as any).link;
                 // Log.trace('GitHubActions::handlePagination(..) - linkText: ' + linkText);
                 const linkParts = linkText.split(',');
                 for (const p of linkParts) {
@@ -608,14 +598,14 @@ export class GitHubActions implements IGitHubActions {
                 for (let i = 2; i <= lastPage; i++) {
                     const pageUri = pageBase + i;
                     // Log.trace('GitHubActions::handlePagination(..) - page to request: ' + pageUri);
-                    (rpOptions as any).uri = pageUri; // not sure why this is needed
+                    const url = (options as any).uri = pageUri; // not sure why this is needed
                     // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
                     await Util.delay(100);
-                    paginationPromises.push(rp(rpOptions as any));
+                    paginationPromises.push(fetch(url, options as any));
                 }
             } else {
                 // Log.trace("GitHubActions::handlePagination(..) - single page");
-                raw = fullResponse.body;
+                raw = await fullResponse.json();
                 // don't put anything on the paginationPromise if it isn't paginated
             }
 
@@ -650,20 +640,17 @@ export class GitHubActions implements IGitHubActions {
         // per_page max is 100; 10 is useful for testing pagination though
         const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.pageSize;
         Log.info("GitHubActions::listTeams(..) - start"); // uri: " + uri);
-        const options = {
+        const options: RequestInit = {
             method:                  'GET',
-            uri:                     uri,
             headers:                 {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
                 // 'Accept':        'application/json',
                 'Accept':        'application/vnd.github.hellcat-preview+json'
-            },
-            resolveWithFullResponse: true,
-            json:                    true
+            }
         };
 
-        const teamsRaw: any = await this.handlePagination(options);
+        const teamsRaw: any = await this.handlePagination(uri, options);
 
         const teams: Array<{teamName: string, teamNumber: number}> = [];
         for (const team of teamsRaw) {
@@ -1039,19 +1026,16 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;
-            const options = {
+            const options: RequestInit = {
                 method:                  'GET',
-                uri:                     uri,
                 headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
-                },
-                resolveWithFullResponse: true,
-                json:                    true
+                }
             };
 
-            const teamMembersRaw: any = await this.handlePagination(options);
+            const teamMembersRaw: any = await this.handlePagination(uri, options);
 
             const ids: string[] = [];
             for (const teamMember of teamMembersRaw) {
