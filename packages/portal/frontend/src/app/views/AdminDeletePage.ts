@@ -35,13 +35,13 @@ export class AdminDeletePage extends AdminPage {
             return a.id.localeCompare(b.id);
         });
 
-        // const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
-        // teamDelete.innerHTML = '';
-        // for (const team of this.teams) {
-        //     const option = document.createElement("option");
-        //     option.text = team.id;
-        //     teamDelete.add(option);
-        // }
+        const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
+        teamDelete.innerHTML = '';
+        for (const team of this.teams) {
+            const option = document.createElement("option");
+            option.text = team.id;
+            teamDelete.add(option);
+        }
 
         const repoDelete = document.getElementById("repoDeleteSelect") as HTMLSelectElement;
         repoDelete.innerHTML = '';
