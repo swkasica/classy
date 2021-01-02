@@ -35,7 +35,7 @@ Classy comes with default views that are available for any instructor to use. Th
 
 ### Admin Results Panel
 
-*Displays basic the result recordd with the highest scores per single or team repository.*
+*Displays basic the result recorded with the highest scores per single or team repository.*
 
 <img src="../assets/admin-view-results.png/">
 
